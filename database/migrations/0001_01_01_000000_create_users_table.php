@@ -15,9 +15,9 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
+            $table->string('document')->unique(); // CPF/CNPJ
             $table->string('password');
-            $table->rememberToken();
+            $table->enum('type', ['common', 'merchant']); // Comum ou Lojista
             $table->timestamps();
         });
 
