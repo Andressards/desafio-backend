@@ -15,10 +15,9 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
-            $table->string('document')->unique(); // CPF/CNPJ
+            $table->string('document')->unique();
             $table->string('password');
-            $table->enum('type', ['common', 'merchant']); // Comum ou Lojista
-            $table->timestamps();
+            $table->enum('type', ['common', 'merchant']);
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
