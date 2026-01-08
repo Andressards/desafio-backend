@@ -48,7 +48,6 @@ class TransferService
 
     public function authorizeTransaction()
     {
-        // O URL do autorizador simulado (verifique no PDF do seu desafio)
         $response = Http::get('https://util.devi.tools/api/v2/authorize');
 
         if ($response->ok() && $response->json('data.authorization') === true) {
