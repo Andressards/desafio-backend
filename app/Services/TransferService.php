@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\User;
 use App\Models\Transfer;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Exception;
 
 class TransferService
@@ -23,7 +24,11 @@ class TransferService
             throw new Exception("Saldo insuficiente.");
         }
 
-        return DB::transaction(function () use ($payer, $payee, $value) {
+        if (!$this->authorizeTransaction()) {
+            throw new \Exception("Transferência não autorizada pelo serviço externo.");
+        }
+
+        $result = DB::transaction(function () use ($payer, $payee, $value) {
             
             $payer->wallet->decrement('balance', $value);
             
@@ -35,5 +40,30 @@ class TransferService
                 'value' => $value
             ]);
         });
+
+        $this->sendNotification();
+
+        return $result;
+    }
+
+    public function authorizeTransaction()
+    {
+        // O URL do autorizador simulado (verifique no PDF do seu desafio)
+        $response = Http::get('https://util.devi.tools/api/v2/authorize');
+
+        if ($response->ok() && $response->json('data.authorization') === true) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public function sendNotification()
+    {
+        try {
+            Http::post('https://util.devi.tools/api/v1/notify');
+        } catch (Exception $e) {
+            \Log::error("Falha ao enviar notificação");
+        }
     }
 }
