@@ -1,59 +1,102 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Plataforma de Pagamentos simplificada
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Este projeto é uma implementação simplificada de uma plataforma de pagamentos. A aplicação permite a realização de transferências financeiras entre usuários comuns e lojistas, respeitando regras de negócio específicas e garantindo a integridade das transações.
 
-## About Laravel
+## 1. Tecnologias Utilizadas
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+*   **PHP 8.2+**
+*   **Laravel 11**
+*   **MySQL 8.0**
+*   **Docker (Laravel Sail)**
+*   **PHPUnit** (Testes Unitários e de Funcionalidade)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 2. Funcionalidades
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+*   **Cadastro de Usuários:** Diferenciação entre usuários comuns e lojistas.
+*   **Carteira Digital:** Cada usuário possui uma carteira com saldo.
+*   **Transferências:**
+    *   Usuários comuns podem enviar dinheiro para qualquer usuário ou lojista.
+    *   Lojistas **apenas recebem** transferências.
+    *   Validação de saldo antes de cada operação.
+    *   Consulta a um serviço autorizador externo antes de finalizar a transação.
+    *   Envio de notificações após o recebimento de pagamentos.
+*   **Transacionalidade:** Garantia de que, em caso de falha, o dinheiro retorne à carteira do pagador (rollback).
 
-## Learning Laravel
+## 3. Arquitetura e Decisões Técnicas
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+Para este projeto, optei por uma estrutura que prioriza a **manutenibilidade** e a **separação de responsabilidades**:
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+*   **Service Layer:** Toda a lógica de negócio das transferências foi isolada no `TransferService`. Isso evita que o Controller fique sobrecarregado e facilita a criação de testes.
+*   **Form Requests:** Utilizei o `TransferRequest` para centralizar as validações de entrada, garantindo que o serviço receba apenas dados válidos.
+*   **Database Transactions:** Implementei o uso de `DB::transaction` para assegurar a atomicidade das operações financeiras.
+*   **Tratamento de Exceções:** O sistema utiliza exceções para gerenciar fluxos de erro (como saldo insuficiente ou lojista tentando transferir), permitindo um retorno claro para a API.
 
-## Laravel Sponsors
+## 4. Como Executar o Projeto
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### Pré-requisitos
+*   Docker instalado em sua máquina.
 
-### Premium Partners
+### Passo a Passo
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+1.  **Clone o repositório:**
+    ```bash
+    git clone https://github.com/Andressards/desafio-backend.git
+    cd desafio-backend
+    ```
 
-## Contributing
+2.  **Instale as dependências (via Docker):**
+    ```bash
+    docker run --rm \
+        -u "$(id -u):$(id -g)" \
+        -v "$(pwd):/var/www/html" \
+        -w /var/www/html \
+        laravelsail/php83-composer:latest \
+        composer install --ignore-platform-reqs
+    ```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+3.  **Configure o ambiente:**
+    ```bash
+    cp .env.example .env
+    ```
 
-## Code of Conduct
+4.  **Inicie os containers:**
+    ```bash
+    ./vendor/bin/sail up -d
+    ```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+5.  **Gere a chave da aplicação e execute as migrations:**
+    ```bash
+    ./vendor/bin/sail artisan key:generate
+    ```
 
-## Security Vulnerabilities
+6.  **Execute as migrations e seeders:**
+    ```bash
+    ./vendor/bin/sail artisan migrate --seed
+    ```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## 5. Executando Testes
 
-## License
+Para garantir a qualidade do código, foram implementados testes unitários e de integração. Para executá-los:
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+./vendor/bin/sail artisan test
+```
+
+## 6. Endpoints da API
+
+### Transferência
+`POST /api/transfer`
+
+**Payload:**
+```json
+{
+    "value": 100.00,
+    "payer": 1,
+    "payee": 2
+}
+```
+
+**Respostas:**
+*   `201 Created`: Transferência realizada com sucesso.
+*   `400 Bad Request`: Erro de validação ou saldo insuficiente.
+*   `403 Forbidden`: Lojista tentando realizar transferência.
