@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Transfer;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Exception;
 
 class TransferService
@@ -62,7 +63,7 @@ class TransferService
         try {
             Http::post('https://util.devi.tools/api/v1/notify');
         } catch (Exception $e) {
-            \Log::error("Falha ao enviar notificação");
+            Log::error("Falha ao enviar notificação");
         }
     }
 }
